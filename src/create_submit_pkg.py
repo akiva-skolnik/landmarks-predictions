@@ -1,11 +1,11 @@
 import datetime
 import glob
+import logging
 import subprocess
 import tarfile
 
 
-def create_submit_pkg():
-
+def create_submit_pkg() -> None:
     # Source files
     src_files = glob.glob("src/*.py")
 
@@ -16,24 +16,24 @@ def create_submit_pkg():
     for nb in notebooks:
         cmd_line = f"jupyter nbconvert --to html {nb}"
 
-        print(f"executing: {cmd_line}")
+        logging.info(f"executing: {cmd_line}")
         subprocess.check_call(cmd_line, shell=True)
 
     html_files = glob.glob("*.htm*")
 
-    now = datetime.datetime.today().isoformat(timespec="minutes").replace(":", "h")+"m"
+    now = datetime.datetime.today().isoformat(timespec="minutes").replace(":", "h") + "m"
     outfile = f"submission_{now}.tar.gz"
-    print(f"Adding files to {outfile}")
+    logging.info(f"Adding files to {outfile}")
     with tarfile.open(outfile, "w:gz") as tar:
         for name in (src_files + notebooks + html_files):
-            print(name)
+            logging.info(name)
             tar.add(name)
 
-    print("")
+    logging.info("")
     msg = f"Done. Please submit the file {outfile}"
-    print("-" * len(msg))
-    print(msg)
-    print("-" * len(msg))
+    logging.info("-" * len(msg))
+    logging.info(msg)
+    logging.info("-" * len(msg))
 
 
 if __name__ == "__main__":

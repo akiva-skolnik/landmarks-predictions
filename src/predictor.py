@@ -1,18 +1,21 @@
+import logging
 import os
 
-import torch
 import numpy as np
-from torch import nn
+import torch
 import torch.nn.functional as F
-from tqdm import tqdm
-from torchvision import datasets
+import torch.utils.data
 import torchvision.transforms as T
+from torch import nn
+from torchvision import datasets
+from tqdm import tqdm
+
 from .helpers import get_data_location
 
 
 class Predictor(nn.Module):
 
-    def __init__(self, model, class_names, mean, std):
+    def __init__(self, model: nn.Module, class_names: list, mean: torch.Tensor, std: torch.Tensor) -> None:
         super().__init__()
 
         self.model = model.eval()
@@ -30,17 +33,16 @@ class Predictor(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         with torch.no_grad():
             # 1. apply transforms
-            x  = # TODO
+            x = self.transforms(x)
             # 2. get the logits
-            x  = # TODO
+            x = self.model(x)
             # 3. apply softmax
-            #    HINT: remmeber to apply softmax across dim=1
-            x  = # TODO
+            x = F.softmax(x, dim=1)
 
             return x
 
 
-def predictor_test(test_dataloader, model_reloaded):
+def predictor_test(test_dataloader: torch.utils.data.DataLoader, model_reloaded: Predictor) -> tuple:
     """
     Test the predictor. Since the predictor does not operate on the same tensors
     as the non-wrapped model, we need a specific test function (can't use one_epoch_test)
@@ -62,7 +64,7 @@ def predictor_test(test_dataloader, model_reloaded):
     pred = np.array(pred)
     truth = np.array(truth)
 
-    print(f"Accuracy: {(pred==truth).sum() / pred.shape[0]}")
+    logging.info(f"Accuracy: {(pred == truth).sum() / pred.shape[0]}")
 
     return truth, pred
 
@@ -81,7 +83,6 @@ def data_loaders():
 
 
 def test_model_construction(data_loaders):
-
     from .model import MyModel
     from .helpers import compute_mean_and_std
 
@@ -90,7 +91,7 @@ def test_model_construction(data_loaders):
     model = MyModel(num_classes=3, dropout=0.3)
 
     dataiter = iter(data_loaders["train"])
-    images, labels = dataiter.next()
+    images, labels = next(dataiter)
 
     predictor = Predictor(model, class_names=['a', 'b', 'c'], mean=mean, std=std)
 

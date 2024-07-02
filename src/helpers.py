@@ -1,30 +1,31 @@
-from io import BytesIO
-import urllib.request
-from zipfile import ZipFile
+import logging
+import multiprocessing
 import os
+import random
+import urllib.request
+from io import BytesIO
+from zipfile import ZipFile
+
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.utils.data
 from torchvision import datasets, transforms
 from tqdm import tqdm
-import multiprocessing
-import matplotlib.pyplot as plt
+
+logging.basicConfig(level=logging.INFO)
+dataset_url = "https://udacity-dlnfd.s3-us-west-1.amazonaws.com/datasets/landmark_images.zip"
 
 
-# Let's see if we have an available GPU
-import numpy as np
-import random
-
-
-def setup_env():
+def setup_env(seed: int = 42) -> None:
     use_cuda = torch.cuda.is_available()
 
     if use_cuda:
-        print("GPU available")
+        logging.info("GPU available")
     else:
-        print("GPU *NOT* available. Will use CPU (slow)")
+        logging.info("GPU *NOT* available. Will use CPU (slow)")
 
     # Seed random generator for repeatibility
-    seed = 42
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -36,10 +37,11 @@ def setup_env():
 
     # Make checkpoints subdir if not existing
     os.makedirs("checkpoints", exist_ok=True)
-    
+
     # Make sure we can reach the installed binaries. This is needed for the workspace
     if os.path.exists("/data/DLND/C2/landmark_images"):
-        os.environ['PATH'] = f"{os.environ['PATH']}:/root/.local/bin"
+        if "/root/.local/bin" not in os.environ['PATH']:
+            os.environ['PATH'] = f"{os.environ['PATH']}:/root/.local/bin"
 
 
 def get_data_location():
@@ -49,55 +51,47 @@ def get_data_location():
 
     if os.path.exists("landmark_images"):
         data_folder = "landmark_images"
+    elif os.path.exists("static_images"):
+        data_folder = "static_images"
     elif os.path.exists("/data/DLND/C2/landmark_images"):
         data_folder = "/data/DLND/C2/landmark_images"
     else:
         raise IOError("Please download the dataset first")
-
+    logging.info(f"Data folder: {data_folder}")
     return data_folder
 
 
-def download_and_extract(
-    url="https://udacity-dlnfd.s3-us-west-1.amazonaws.com/datasets/landmark_images.zip",
-):
-    
+def download_and_extract(url: str = dataset_url) -> None:
     try:
-        
         location = get_data_location()
-    
     except IOError:
         # Dataset does not exist
-        print(f"Downloading and unzipping {url}. This will take a while...")
-
+        logging.info(f"Downloading and unzipping {url}. This will take a while...")
         with urllib.request.urlopen(url) as resp:
-
             with ZipFile(BytesIO(resp.read())) as fp:
-
                 fp.extractall(".")
 
-        print("done")
-                
+        logging.info("done")
+
     else:
-        
-        print(
+        logging.info(
             "Dataset already downloaded. If you need to re-download, "
             f"please delete the directory {location}"
         )
-        return None
 
 
 # Compute image normalization
-def compute_mean_and_std():
+def compute_mean_and_std() -> (torch.Tensor, torch.Tensor):
     """
     Compute per-channel mean and std of the dataset (to be used in transforms.Normalize())
     """
 
     cache_file = "mean_and_std.pt"
     if os.path.exists(cache_file):
-        print(f"Reusing cached mean and std")
         d = torch.load(cache_file)
-
-        return d["mean"], d["std"]
+        mean, std = d["mean"], d["std"]
+        logging.info(f"Reusing cached mean and std. Mean: {mean}, std: {std}")
+        return mean, std
 
     folder = get_data_location()
     ds = datasets.ImageFolder(
@@ -126,11 +120,11 @@ def compute_mean_and_std():
 
     # Cache results so we don't need to redo the computation
     torch.save({"mean": mean, "std": std}, cache_file)
-
+    logging.info(f"Mean: {mean}, std: {std}")
     return mean, std
 
 
-def after_subplot(ax: plt.Axes, group_name: str, x_label: str):
+def after_subplot(ax: plt.Axes, group_name: str, x_label: str) -> None:
     """Add title xlabel and legend to single chart"""
     ax.set_title(group_name)
     ax.set_xlabel(x_label)
@@ -140,7 +134,7 @@ def after_subplot(ax: plt.Axes, group_name: str, x_label: str):
         ax.set_ylim([None, 4.5])
 
 
-def plot_confusion_matrix(pred, truth):
+def plot_confusion_matrix(pred: list, truth: list) -> None:
     import pandas as pd
     import seaborn as sns
     import matplotlib.pyplot as plt
