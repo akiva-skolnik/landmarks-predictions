@@ -12,6 +12,8 @@ from tqdm import tqdm
 
 from .helpers import get_data_location
 
+logger = logging.getLogger(__name__)
+
 
 class Predictor(nn.Module):
 
@@ -64,7 +66,7 @@ def predictor_test(test_dataloader: torch.utils.data.DataLoader, model_reloaded:
     pred = np.array(pred)
     truth = np.array(truth)
 
-    logging.info(f"Accuracy: {(pred == truth).sum() / pred.shape[0]}")
+    logger.info(f"Accuracy: {(pred == truth).sum() / pred.shape[0]}")
 
     return truth, pred
 

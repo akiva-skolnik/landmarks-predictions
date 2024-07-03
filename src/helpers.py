@@ -13,7 +13,7 @@ import torch.utils.data
 from torchvision import datasets, transforms
 from tqdm import tqdm
 
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 dataset_url = "https://udacity-dlnfd.s3-us-west-1.amazonaws.com/datasets/landmark_images.zip"
 
 
@@ -21,9 +21,9 @@ def setup_env(seed: int = 42) -> None:
     use_cuda = torch.cuda.is_available()
 
     if use_cuda:
-        logging.info("GPU available")
+        logger.info("GPU available")
     else:
-        logging.info("GPU *NOT* available. Will use CPU (slow)")
+        logger.info("GPU *NOT* available. Will use CPU (slow)")
 
     # Seed random generator for repeatibility
     random.seed(seed)
@@ -57,7 +57,7 @@ def get_data_location():
         data_folder = "/data/DLND/C2/landmark_images"
     else:
         raise IOError("Please download the dataset first")
-    logging.info(f"Data folder: {data_folder}")
+    logger.info(f"Data folder: {data_folder}")
     return data_folder
 
 
@@ -66,15 +66,15 @@ def download_and_extract(url: str = dataset_url) -> None:
         location = get_data_location()
     except IOError:
         # Dataset does not exist
-        logging.info(f"Downloading and unzipping {url}. This will take a while...")
+        logger.info(f"Downloading and unzipping {url}. This will take a while...")
         with urllib.request.urlopen(url) as resp:
             with ZipFile(BytesIO(resp.read())) as fp:
                 fp.extractall(".")
 
-        logging.info("done")
+        logger.info("done")
 
     else:
-        logging.info(
+        logger.info(
             "Dataset already downloaded. If you need to re-download, "
             f"please delete the directory {location}"
         )
@@ -90,7 +90,7 @@ def compute_mean_and_std() -> (torch.Tensor, torch.Tensor):
     if os.path.exists(cache_file):
         d = torch.load(cache_file)
         mean, std = d["mean"], d["std"]
-        logging.info(f"Reusing cached mean and std. Mean: {mean}, std: {std}")
+        logger.info(f"Reusing cached mean and std. Mean: {mean}, std: {std}")
         return mean, std
 
     folder = get_data_location()
@@ -120,7 +120,7 @@ def compute_mean_and_std() -> (torch.Tensor, torch.Tensor):
 
     # Cache results so we don't need to redo the computation
     torch.save({"mean": mean, "std": std}, cache_file)
-    logging.info(f"Mean: {mean}, std: {std}")
+    logger.info(f"Mean: {mean}, std: {std}")
     return mean, std
 
 

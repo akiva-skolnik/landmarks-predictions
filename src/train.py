@@ -11,6 +11,8 @@ from tqdm import tqdm
 
 from src.helpers import after_subplot
 
+logger = logging.getLogger(__name__)
+
 
 def train_one_epoch(train_dataloader: DataLoader, model: torch.nn.Module,
                     optimizer: torch.optim.Optimizer, loss: torch.nn.Module) -> float:
@@ -118,7 +120,7 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
         valid_loss = valid_one_epoch(data_loaders["valid"], model, loss)
 
         # print training/validation statistics
-        logging.info(
+        logger.info(
             "Epoch: {} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}".format(
                 epoch, train_loss, valid_loss
             )
@@ -128,7 +130,7 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
         if valid_loss_min is None or (
                 (valid_loss_min - valid_loss) / valid_loss_min > 0.01
         ):
-            logging.info(f"New minimum validation loss: {valid_loss:.6f}. Saving model ...")
+            logger.info(f"New minimum validation loss: {valid_loss:.6f}. Saving model ...")
 
             # Save the weights to save_path
             torch.save(model.state_dict(), save_path)
@@ -190,9 +192,9 @@ def one_epoch_test(test_dataloader, model, loss):
             correct += torch.sum(torch.squeeze(pred.eq(target.data.view_as(pred))).cpu())
             total += data.size(0)
 
-    logging.info('Test Loss: {:.6f}\n'.format(test_loss))
+    logger.info('Test Loss: {:.6f}\n'.format(test_loss))
 
-    logging.info('\nTest Accuracy: %2d%% (%2d/%2d)' % (
+    logger.info('\nTest Accuracy: %2d%% (%2d/%2d)' % (
         100. * correct / total, correct, total))
 
     return test_loss

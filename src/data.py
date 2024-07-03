@@ -11,6 +11,8 @@ from torchvision import datasets, transforms
 
 from .helpers import compute_mean_and_std, get_data_location
 
+logger = logging.getLogger(__name__)
+
 
 def get_data_loaders(batch_size: int = 32, valid_size: float = 0.2,
                      num_workers: int = -1, limit: int = -1) -> Dict[str, DataLoader]:
@@ -30,7 +32,7 @@ def get_data_loaders(batch_size: int = 32, valid_size: float = 0.2,
     if num_workers == -1:
         # Use all cores
         num_workers = multiprocessing.cpu_count()
-        logging.info(f"Using {num_workers} workers")
+        logger.info(f"Using {num_workers} workers")
 
     # We will fill this up later
     data_loaders = {"train": None, "valid": None, "test": None}
@@ -39,7 +41,7 @@ def get_data_loaders(batch_size: int = 32, valid_size: float = 0.2,
 
     # Compute mean and std of the dataset
     mean, std = compute_mean_and_std()
-    logging.info(f"Dataset mean: {mean}, std: {std}")
+    logger.info(f"Dataset mean: {mean}, std: {std}")
 
     # create 3 sets of data transforms:
     # one for the training dataset, containing data augmentation

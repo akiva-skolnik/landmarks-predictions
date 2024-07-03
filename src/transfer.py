@@ -14,8 +14,6 @@ def get_model_transfer_learning(model_name: str = "resnet18", n_classes: int = 5
                          f"https://pytorch.org/vision/{torchvision_major_minor}/models.html")
 
     # Freeze all parameters in the model
-    # HINT: loop over all parameters. If "param" is one parameter TODO?,
-    # "param.requires_grad = False" freezes it
     for param in model_transfer.parameters():
         param.requires_grad = False
 

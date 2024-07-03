@@ -3,6 +3,8 @@ import logging
 import torch
 import torch.nn as nn
 
+logger = logging.getLogger(__name__)
+
 
 # define the CNN architecture
 class MyModel(nn.Module):
@@ -39,7 +41,7 @@ class MyModel(nn.Module):
 
         in_features = x * y * z  # 512 * 3 * 3 = 4608
         hidden_nodes = in_features // 9  # 512
-        logging.info(f"Number of input features to the classifier: {in_features}, hidden nodes: {hidden_nodes}")
+        logger.info(f"Number of input features to the classifier: {in_features}, hidden nodes: {hidden_nodes}")
         self.classifier = nn.Sequential(
             nn.Flatten(),
             nn.Linear(in_features=in_features, out_features=hidden_nodes),
@@ -48,7 +50,7 @@ class MyModel(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_nodes, num_classes)
         )
-        logging.info(f"Model has {sum(p.numel() for p in self.parameters() if p.requires_grad): ,} parameters")
+        logger.info(f"Model has {sum(p.numel() for p in self.parameters() if p.requires_grad): ,} parameters")
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # process the input tensor through the feature extractor,

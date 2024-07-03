@@ -4,6 +4,8 @@ import logging
 import subprocess
 import tarfile
 
+logger = logging.getLogger(__name__)
+
 
 def create_submit_pkg() -> None:
     # Source files
@@ -16,24 +18,24 @@ def create_submit_pkg() -> None:
     for nb in notebooks:
         cmd_line = f"jupyter nbconvert --to html {nb}"
 
-        logging.info(f"executing: {cmd_line}")
+        logger.info(f"executing: {cmd_line}")
         subprocess.check_call(cmd_line, shell=True)
 
     html_files = glob.glob("*.htm*")
 
     now = datetime.datetime.today().isoformat(timespec="minutes").replace(":", "h") + "m"
     outfile = f"submission_{now}.tar.gz"
-    logging.info(f"Adding files to {outfile}")
+    logger.info(f"Adding files to {outfile}")
     with tarfile.open(outfile, "w:gz") as tar:
         for name in (src_files + notebooks + html_files):
-            logging.info(name)
+            logger.info(name)
             tar.add(name)
 
-    logging.info("")
+    logger.info("")
     msg = f"Done. Please submit the file {outfile}"
-    logging.info("-" * len(msg))
-    logging.info(msg)
-    logging.info("-" * len(msg))
+    logger.info("-" * len(msg))
+    logger.info(msg)
+    logger.info("-" * len(msg))
 
 
 if __name__ == "__main__":
